@@ -145,7 +145,7 @@ def main():
         :param loop: The main event loop
         :return: Always returns True
         """
-        global count_for_loops, delayed_loop_count
+        global delayed_loop_count
 
         # count execution time in milliseconds
         start = datetime.now()

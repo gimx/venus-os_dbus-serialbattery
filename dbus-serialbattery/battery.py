@@ -632,7 +632,7 @@ class Battery(ABC):
         """
         Call this method only, if `SOC_RESET_AFTER_DAYS` is not False.
 
-        It sets the `self.max_battery_voltage` to the `SOC_RESET_VOLTAGE` once needed.
+        It sets the `self.max_battery_voltage` to the `SOC_RESET_CELL_VOLTAGE` once needed.
 
         :return: None
         """
@@ -649,7 +649,7 @@ class Battery(ABC):
         ):
             self.soc_reset_requested = True
 
-        self.soc_reset_battery_voltage = round(utils.SOC_RESET_VOLTAGE * self.cell_count, 2)
+        self.soc_reset_battery_voltage = round(utils.SOC_RESET_CELL_VOLTAGE * self.cell_count, 2)
 
         if self.soc_reset_requested:
             self.max_battery_voltage = self.soc_reset_battery_voltage
@@ -734,7 +734,7 @@ class Battery(ABC):
             if self.allow_max_voltage:
 
                 # Get maximum allowed cell voltage
-                cell_voltage_max_allowed = utils.SOC_RESET_VOLTAGE if self.soc_reset_requested else utils.MAX_CELL_VOLTAGE
+                cell_voltage_max_allowed = utils.SOC_RESET_CELL_VOLTAGE if self.soc_reset_requested else utils.MAX_CELL_VOLTAGE
 
                 # use P-Controller
                 if utils.CVL_CONTROLLER_MODE == 1:
@@ -882,9 +882,17 @@ class Battery(ABC):
                     + f"discharge_fet: {self.discharge_fet} • "
                     + f"control_allow_discharge: {self.control_allow_discharge}\n"
                     + f"block_because_disconnect: {self.block_because_disconnect}\n"
-                    + "soc_reset_last_reached: "
-                    + ("Never" if self.soc_reset_last_reached == 0 else f"{soc_reset_days_ago}")
-                    + f" d ago, next in {soc_reset_in_days} d\n"
+                    + (
+                        (
+                            "soc_reset_last_reached: "
+                            + ("Never" if self.soc_reset_last_reached == 0 else f"{soc_reset_days_ago} d ago")
+                            + ", next "
+                            + (" already planned" if soc_reset_in_days < 0 else "in {soc_reset_in_days} d")
+                            + "\n"
+                        )
+                        if utils.SOC_RESET_AFTER_DAYS is not False
+                        else ""
+                    )
                     + (
                         f"soc_calc_capacity_remain: {self.soc_calc_capacity_remain:.3f}/{self.capacity} Ah\n"
                         if self.soc_calc_capacity_remain is not None

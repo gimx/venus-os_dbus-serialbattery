@@ -519,6 +519,16 @@ class DbusHelper:
             gettextcallback=lambda p, v: "{:0.2f}V".format(v),
         )
         self._dbusservice.add_path(
+            "/Info/MaxChargeCellVoltage",
+            (
+                round(self.battery.max_battery_voltage / self.battery.cell_count, 3)
+                if self.battery.max_battery_voltage is not None and self.battery.cell_count is not None
+                else None
+            ),
+            writeable=True,
+            gettextcallback=lambda p, v: "{:0.2f}V".format(v),
+        )
+        self._dbusservice.add_path(
             "/Info/MaxChargeCurrent",
             self.battery.max_battery_charge_current,
             writeable=True,
@@ -970,6 +980,11 @@ class DbusHelper:
         self._dbusservice["/Info/BatteryLowVoltage"] = self.battery.min_battery_voltage
         self._dbusservice["/Info/MaxChargeVoltage"] = (
             round(self.battery.control_voltage + utils.VOLTAGE_DROP, 2) if self.battery.control_voltage is not None else None
+        )
+        self._dbusservice["/Info/MaxChargeCellVoltage"] = (
+            round(self.battery.max_battery_voltage / self.battery.cell_count, 3)
+            if self.battery.max_battery_voltage is not None and self.battery.cell_count is not None
+            else None
         )
 
         # Charge control

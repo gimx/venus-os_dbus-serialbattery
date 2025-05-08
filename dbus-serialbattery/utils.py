@@ -14,7 +14,7 @@ import serial
 
 
 # CONSTANTS
-DRIVER_VERSION: str = "2.0.20250324dev"
+DRIVER_VERSION: str = "2.0.20250502dev"
 """
 current version of the driver
 """
@@ -188,17 +188,17 @@ elif FLOAT_CELL_VOLTAGE < MIN_CELL_VOLTAGE:
 
 
 # --------- SoC Reset Voltage (must match BMS settings) ---------
-SOC_RESET_VOLTAGE: float = get_float_from_config("DEFAULT", "SOC_RESET_VOLTAGE")
+SOC_RESET_CELL_VOLTAGE: float = get_float_from_config("DEFAULT", "SOC_RESET_CELL_VOLTAGE")
 SOC_RESET_AFTER_DAYS: Union[int, bool] = get_int_from_config("DEFAULT", "SOC_RESET_AFTER_DAYS") if config["DEFAULT"]["SOC_RESET_AFTER_DAYS"] != "" else False
 
 # make some checks for most common misconfigurations
-if SOC_RESET_AFTER_DAYS and SOC_RESET_VOLTAGE < MAX_CELL_VOLTAGE:
+if SOC_RESET_AFTER_DAYS and SOC_RESET_CELL_VOLTAGE < MAX_CELL_VOLTAGE:
     check_config_issue(
         True,
-        f"SOC_RESET_VOLTAGE ({SOC_RESET_VOLTAGE} V) is less than MAX_CELL_VOLTAGE ({MAX_CELL_VOLTAGE} V). "
-        "To ensure that the driver still works correctly, SOC_RESET_VOLTAGE was set to MAX_CELL_VOLTAGE. Please check the configuration.",
+        f"SOC_RESET_CELL_VOLTAGE ({SOC_RESET_CELL_VOLTAGE} V) is less than MAX_CELL_VOLTAGE ({MAX_CELL_VOLTAGE} V). "
+        "To ensure that the driver still works correctly, SOC_RESET_CELL_VOLTAGE was set to MAX_CELL_VOLTAGE. Please check the configuration.",
     )
-    SOC_RESET_VOLTAGE = MAX_CELL_VOLTAGE
+    SOC_RESET_CELL_VOLTAGE = MAX_CELL_VOLTAGE
 
 
 # --------- SoC Calculation ---------
@@ -324,9 +324,9 @@ check_config_issue(
 )
 
 check_config_issue(
-    SOC_RESET_AFTER_DAYS and CELL_VOLTAGES_WHILE_CHARGING[0] < SOC_RESET_VOLTAGE and MAX_CHARGE_CURRENT_CV[0] == 0,
-    f"Maximum value of CELL_VOLTAGES_WHILE_CHARGING ({CELL_VOLTAGES_WHILE_CHARGING[0]} V) is lower than SOC_RESET_VOLTAGE ({SOC_RESET_VOLTAGE} V). "
-    "SOC_RESET_VOLTAGE will never be reached this way and battery will not change to float. Please check the configuration.",
+    SOC_RESET_AFTER_DAYS and CELL_VOLTAGES_WHILE_CHARGING[0] < SOC_RESET_CELL_VOLTAGE and MAX_CHARGE_CURRENT_CV[0] == 0,
+    f"Maximum value of CELL_VOLTAGES_WHILE_CHARGING ({CELL_VOLTAGES_WHILE_CHARGING[0]} V) is lower than SOC_RESET_CELL_VOLTAGE ({SOC_RESET_CELL_VOLTAGE} V). "
+    "SOC_RESET_CELL_VOLTAGE will never be reached this way and battery will not change to float. Please check the configuration.",
 )
 
 check_config_issue(

@@ -13,6 +13,9 @@
 
 ### Breaking Changes
 
+* Driver version greater or equal to `v2.0.20250502dev`
+  * Changes to `config.default.ini`: `SOC_RESET_VOLTAGE` was replaced by `SOC_RESET_CELL_VOLTAGE`
+
 * Driver version greater or equal to `v2.0.20250207dev`
   * Changes to `config.default.ini`: `TEMPERATURE_SOURCE_BATTERY` is now a list of temperature sensors, so you can choose which sensors you want to use
 
@@ -66,10 +69,11 @@
 * Added: Min/Max lifetime temperature to history class and battery template by @mr-manuel
 * Added: Pace BMS by @KoljaWindeler
 * Added: Possibility to add external sensor for SoC by @mr-manuel
+* Added: Show CVL also on cell voltage base by @mr-manuel
 * Added: Signal handler for clean service restart/shutdown by @mr-manuel
 * Added: UBMS CAN - support for Valence U-BMS by @gimx
 * Changed: A lot of under the hood optimizations by @mr-manuel
-* Changed: Apply `SOC_RESET_VOLTAGE` after `SOC_RESET_AFTER_DAYS` regardless of whether the battery is in absorption, bulk, or float mode https://github.com/mr-manuel/venus-os_dbus-serialbattery/issues/123 by @mr-manuel
+* Changed: Apply `SOC_RESET_CELL_VOLTAGE` after `SOC_RESET_AFTER_DAYS` regardless of whether the battery is in absorption, bulk, or float mode https://github.com/mr-manuel/venus-os_dbus-serialbattery/issues/123 by @mr-manuel
 * Changed: BLE - Reworked log notifications be more helpful by @mr-manuel
 * Changed: BLE - Reworked installation for external Bluetooth USB dongle by @Felixrising & @mr-manuel
 * Changed: Consumed capacity must be negative values by @mr-manuel
@@ -84,6 +88,7 @@
 * Changed: Fixed issue, when calculated SOC is restored from dbus and BMS SOC is 0 by @mr-manuel
 * Changed: Fixed Seplos V3 cell balance status with https://github.com/mr-manuel/venus-os_dbus-serialbattery/pull/213 by @marcelrv
 * Changed: Fixed serial port handling with https://github.com/mr-manuel/venus-os_dbus-serialbattery/pull/211 by @WaldemarFech
+* Changed: Heltec BMS - Fixed issues with https://github.com/mr-manuel/venus-os_dbus-serialbattery/pull/246 by @ramack
 * Changed: Improved driver and `config.default.ini` descriptions by @mr-manuel
 * Changed: JKBMS BLE - Reworked code by @mr-manuel
 * Changed: JKBMS CAN - Per default only address 0 is recognized. Change `BATTERY_ADDRESS` to match your device address by @Hooorny and @mr-manuel
@@ -112,6 +117,7 @@
 * Changed: The setting `SOC_CALC_CURRENT_MEASURED_BY_USER` was replaced by `CURRENT_MEASURED_BY_USER` in the `config.default.ini` by @mr-manuel
 * Changed: The setting `SOC_CALC_CURRENT_REPORTED_BY_BMS` was replaced by `CURRENT_REPORTED_BY_BMS` in the `config.default.ini` by @mr-manuel
 * Changed: The setting `SOC_LEVEL_TO_RESET_VOLTAGE_LIMIT` was replaced by `SWITCH_TO_BULK_SOC_THRESHOLD` in the `config.default.ini` by @mr-manuel
+* Changed: The setting `SOC_RESET_VOLTAGE` was replaced by `SOC_RESET_CELL_VOLTAGE` in the `config.default.ini` by @mr-manuel
 * Changed: The setting `TEMP_1_NAME` was replaced by `TEMPERATURE_1_NAME` in the `config.default.ini` by @mr-manuel
 * Changed: The setting `TEMP_2_NAME` was replaced by `TEMPERATURE_2_NAME` in the `config.default.ini` by @mr-manuel
 * Changed: The setting `TEMP_3_NAME` was replaced by `TEMPERATURE_3_NAME` in the `config.default.ini` by @mr-manuel

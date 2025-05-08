@@ -50,6 +50,8 @@ body:
         - SFTP upload
         - USB stick
         - Other (please describe in the last textfield how you installed the driver)
+    validations:
+      required: true
 
   - type: input
     id: driver_version_installed
@@ -184,10 +186,10 @@ body:
         ⚠️ **IMPORTANT:** If you use a USB hub, try to connect the Serial USB adapter directly to the Venus OS device to see if the issue still exists.
       multiple: false
       options:
-        - ⚠️ Choose your option ⚠️
-        - No
-        - Yes, no external power supply
-        - Yes, with external power supply
+        - "⚠️ Choose your option ⚠️"
+        - "No, the Serial USB adapter is connected directly to the Venus OS device"
+        - "Yes, no external power supply"
+        - "Yes, with external power supply"
     validations:
       required: true
 

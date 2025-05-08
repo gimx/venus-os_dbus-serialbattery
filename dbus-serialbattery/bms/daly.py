@@ -179,32 +179,37 @@ class Daly(Battery):
         self.last_charge_mode = self.charge_mode
 
     def read_status_data(self, ser):
-        status_data = self.request_data(ser, self.command_status)
-        # check if connection success
-        if status_data is False:
-            logger.debug("No data received in read_status_data()")
-            return False
+        read_tries = 1
 
-        try:
-            (
-                cell_count,
-                temperature_sensors,
-                self.charger_connected,
-                self.load_connected,
-                state,
-                self.history.charge_cycles,
-            ) = unpack_from(">bb??bhx", status_data)
-        except Exception:
-            return False
+        # try to read data 3 times
+        while read_tries <= 3:
+            read_tries += 1
+            status_data = self.request_data(ser, self.command_status)
+            # check if connection success
+            if status_data is False:
+                logger.debug("No data received in read_status_data()")
+                continue
 
-        if cell_count > 0:
-            self.cell_count = cell_count
+            try:
+                (
+                    cell_count,
+                    temperature_sensors,
+                    self.charger_connected,
+                    self.load_connected,
+                    state,
+                    self.history.charge_cycles,
+                ) = unpack_from(">bb??bhx", status_data)
+            except Exception:
+                return False
 
-            self.hardware_version = "DalyBMS " + str(self.cell_count) + "S" + (" (" + self.production + ")" if self.production else "")
+            if cell_count > 0:
+                self.cell_count = cell_count
 
-            logger.debug(self.hardware_version)
+                self.hardware_version = "DalyBMS " + str(self.cell_count) + "S" + (" (" + self.production + ")" if self.production else "")
 
-            return True
+                logger.debug(self.hardware_version)
+
+                return True
 
         return False
 
@@ -514,29 +519,34 @@ class Daly(Battery):
         return True
 
     def read_battery_code(self, ser):
-        data = self.request_data(ser, self.command_batt_code, sentences_to_receive=5)
+        read_tries = 1
 
-        if data is False:
-            logger.debug("No data received in read_battery_code()")
-            return False
+        # try to read data 3 times
+        while read_tries <= 3:
+            read_tries += 1
+            data = self.request_data(ser, self.command_batt_code, sentences_to_receive=5)
 
-        battery_code = ""
-        # logger.warning("data " + bytearray_to_string(cells_volts_data))
+            if data is False:
+                logger.debug("No data received in read_battery_code()")
+                continue
 
-        for i in range(5):
-            nr, part = unpack_from(">B7s", data, i * 8)
+            battery_code = ""
+            # logger.warning("data " + bytearray_to_string(cells_volts_data))
 
-            if nr != i + 1:
-                logger.debug("bad battery code index")  # use string anyhow, just warn
+            for i in range(5):
+                nr, part = unpack_from(">B7s", data, i * 8)
 
-            battery_code += part.decode("utf-8")
+                if nr != i + 1:
+                    logger.debug("bad battery code index")  # use string anyhow, just warn
 
-        if battery_code != "":
-            self.custom_field = sub(
-                " +",
-                " ",
-                (battery_code.replace("\x00", " ").strip()),
-            )
+                battery_code += part.decode("utf-8")
+
+            if battery_code != "":
+                self.custom_field = sub(
+                    " +",
+                    " ",
+                    (battery_code.replace("\x00", " ").strip()),
+                )
 
         return True
 

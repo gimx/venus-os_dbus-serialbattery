@@ -55,9 +55,12 @@ class Ubms_Can(Battery):
         self.max_battery_voltage = self.max_charge_voltage
         self.min_battery_voltage = MIN_CELL_VOLTAGE * self.cells_per_module * UBMS_CAN_MODULE_SERIES
 
-        self.cell_count = self.number_of_modules * self.cells_per_module
+        # FIXME workaround for wrong upstream calculation of CVL and max_battery_voltage using cell_count 
+        # for UBMS this value is only the number of cells in ONE string, while there can be more in parallel 
+        # self.cell_count = self.number_of_modules * self.cells_per_module
+        self.cell_count = self.modules_in_series * self.cells_per_module
 
-        self.cells = [Cell(False) for _ in range(self.cell_count)]
+        self.cells = [Cell(False) for _ in range(self.number_of_modules * self.cells_per_module)]
 
         self.charge_complete = 0
         self.soc = 0

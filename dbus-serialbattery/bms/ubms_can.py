@@ -168,7 +168,7 @@ class Ubms_Can(Battery):
                 arbitration_id=0x440, data=[0, 2, 0, 0], is_extended_id=False
             )  # default: drive mode, i.e. contactor closed
 
-            self.cyclic_mode_task = self.can_transport_interface.send_periodic(msg, 1)
+            self.cyclic_mode_task = self.can_transport_interface.can_bus.send_periodic(msg, 1)
             return True
         else:
             return False

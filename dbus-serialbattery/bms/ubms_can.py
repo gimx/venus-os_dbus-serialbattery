@@ -3,9 +3,6 @@
 # NOTES
 # Added by https://github.com/gimx based on https://github.com/gimx/dbus_ubms
 
-# TODO
-# - cell balancing status
-
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 from battery import Battery, Cell
@@ -26,6 +23,9 @@ import itertools
 
 
 class Ubms_Can(Battery):
+    # Mapping UBMS to Victron States
+    opState = {0: 0, 1: 9, 2: 9}
+
     def __init__(self, port, baud, address):
         super(Ubms_Can, self).__init__(port, baud, address)
         self.type = self.BATTERYTYPE
@@ -62,7 +62,7 @@ class Ubms_Can(Battery):
         self.charge_complete = 0
         self.soc = 0
         self.mode = 0
-        self.state = ""
+        self.state = 0
         self.voltage = 0
         self.current = 0
         self.temperature = 0
@@ -199,7 +199,7 @@ class Ubms_Can(Battery):
 
             self.update_cell_voltages()
 
-            self.to_temperature(self, 1, self.max_pcb_temperature)
+            self.to_temperature(1, self.max_pcb_temperature)
 
         return result
 
@@ -251,6 +251,7 @@ class Ubms_Can(Battery):
             if msg.arbitration_id == 0xC0:
                 self.soc = msg.data[0]
                 self.mode = msg.data[1]
+                self.state = self.opState[self.mode & 0x3]
                 self.balancing = True if (self.mode & 0x10) != 0 else False
                 self.voltage_and_cell_t_alarms = msg.data[2]
                 self.internal_errors = msg.data[3]
@@ -294,13 +295,18 @@ class Ubms_Can(Battery):
                 self.cell_max_voltage = self.max_cell_voltage
                 self.cell_min_voltage = self.min_cell_voltage
 
-            # FIXME Intra-module balance flags, 1 bit per cell, 1 byte per module
-            # elif msg.arbitration_id in [0x26A, 0x26B]:
-            #     for m in range [(msg.arbitration_id-0x2A) * 8, ((msg.arbitration_id-0x2A + 1) * 8) -1]:
-            #         self.cells[m * self.cells_per_module + 0].balance = True if ((msg.data[m]>>c) & 1) != 0 else False
-            #         self.cells[m * self.cells_per_module + 1].balance = True if ((msg.data[m]>>1) & 1) != 0 else False
-            #         self.cells[m * self.cells_per_module + 2].balance = True if ((msg.data[m]>>2) & 1) != 0 else False
-            #         self.cells[m * self.cells_per_module + 3].balance = True if ((msg.data[m]>>3) & 1) != 0 else False
+            # Intra-module balance flags, 1 bit per cell, 1 byte per module
+            elif msg.arbitration_id in [0x26A]:
+                #for m in range ((msg.arbitration_id-0x26A) * 7, ((msg.arbitration_id-0x26A + 1) * 7) -1):
+                for m in range (0, 6):
+                    self.cells[m * self.cells_per_module + 0].balance = True #if (msg.data[m] & 1) != 0 else False
+                    self.cells[m * self.cells_per_module + 1].balance = True #if (msg.data[m] & 2) != 0 else False
+                    self.cells[m * self.cells_per_module + 2].balance = True #if (msg.data[m] & 4) != 0 else False
+                    self.cells[m * self.cells_per_module + 3].balance = True #if (msg.data[m] & 8) != 0 else False
+                    # self.cells[m * self.cells_per_module + 4].balance = True if (msg.data[m] & 0x10) != 0 else False
+                    # self.cells[m * self.cells_per_module + 5].balance = True if (msg.data[m] & 0x20) != 0 else False
+                    # self.cells[m * self.cells_per_module + 6].balance = True if (msg.data[m] & 0x40) != 0 else False
+                    # self.cells[m * self.cells_per_module + 7].balance = True if (msg.data[m] & 0x80) != 0 else False
 
             elif msg.arbitration_id in [0x350, 0x352, 0x354, 0x356, 0x358, 0x35A, 0x35C, 0x35E, 0x360, 0x362, 0x364]:
                 module = (msg.arbitration_id - 0x350) >> 1
@@ -317,11 +323,17 @@ class Ubms_Can(Battery):
 
         return True
 
-    def get_max_temperature(self)
+    def get_max_temperature(self):
         return self.max_cell_temperature
 
-    def get_min_temperature(self)
+    def get_min_temperature(self):
         return self.min_cell_temperature
+
+    def get_max_temperature_id(self):
+        return "unknown"
+
+    def get_min_temperature_id(self):
+        return "unknown"
 
     # Set up filters for the messages we want to receive
     def _set_operational_filters(self):
@@ -329,8 +341,9 @@ class Ubms_Can(Battery):
             {"can_id": 0x0CF, "can_mask": 0xFF0},
             {"can_id": 0x350, "can_mask": 0xFF0},
             {"can_id": 0x360, "can_mask": 0xFF0},
-            {"can_id": 0x46A, "can_mask": 0xFF0},
-            {"can_id": 0x06A, "can_mask": 0xFF0},
-            {"can_id": 0x76A, "can_mask": 0xFF0},
+            {"can_id": 0x26A, "can_mask": 0xFF0},
+#            {"can_id": 0x46A, "can_mask": 0xFF0},
+#            {"can_id": 0x06A, "can_mask": 0xFF0},
+#            {"can_id": 0x76A, "can_mask": 0xFF0},
         ]
         self.can_transport_interface.can_bus.set_filters(filters)

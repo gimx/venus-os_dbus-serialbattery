@@ -168,16 +168,19 @@ class Ubms_Can(Battery):
             elif msg.arbitration_id == 0xC1:
                 # check pack voltage
                 if abs(2 * msg.data[0] - self.max_charge_voltage) > 0.15 * self.max_charge_voltage:
-                    logger.error("U-BMS pack voltage of %dV differs significantly from configured max charge voltage %dV.", msg.data[0], self.max_charge_voltage)
+                    logger.warning(
+                        "U-BMS pack voltage of %dV differs significantly from configured max charge voltage %dV.",
+                        msg.data[0],
+                        self.max_charge_voltage
+                    )
                 found = found | 4
 
         if found >= 3:
             # create a cyclic mode command message simulating a VMU master
             # a U-BMS in slave mode according to manual section 6.4.1 switches to standby
             # after 20 seconds of not receiving it
-            msg = can.Message(
-                arbitration_id=0x440, data=[0, 2, 0, 0], is_extended_id=False
-            )  # default: drive mode, i.e. contactor closed
+            # default: drive mode, i.e. contactor closed
+            msg = can.Message(arbitration_id=0x440, data=[0, 2, 0, 0], is_extended_id=False)
 
             self.cyclic_mode_task = self.can_transport_interface.can_bus.send_periodic(msg, 1)
             return True
@@ -212,11 +215,6 @@ class Ubms_Can(Battery):
         # flag high cell temperature alarm and high pcb temperature alarm
         self.protection.high_temperature = (self.voltage_and_cell_t_alarms & 0x6) >> 1 | (self.current_and_pcb_t_alarms & 0x18) >> 3
         self.protection.low_temperature = (self.mode & 0x60) >> 5
-
-
-    # logger.debug("alarms %d" % (alarms))
-    # self.last_error_time = time()
-    # self.error_active = True
 
     def reset_protection_bits(self):
         self.protection.high_cell_voltage = 0
@@ -297,16 +295,15 @@ class Ubms_Can(Battery):
 
             # Intra-module balance flags, 1 bit per cell, 1 byte per module
             elif msg.arbitration_id in [0x26A]:
-                #for m in range ((msg.arbitration_id-0x26A) * 7, ((msg.arbitration_id-0x26A + 1) * 7) -1):
-                for m in range (0, 6):
-                    self.cells[m * self.cells_per_module + 0].balance = True #if (msg.data[m] & 1) != 0 else False
-                    self.cells[m * self.cells_per_module + 1].balance = True #if (msg.data[m] & 2) != 0 else False
-                    self.cells[m * self.cells_per_module + 2].balance = True #if (msg.data[m] & 4) != 0 else False
-                    self.cells[m * self.cells_per_module + 3].balance = True #if (msg.data[m] & 8) != 0 else False
-                    # self.cells[m * self.cells_per_module + 4].balance = True if (msg.data[m] & 0x10) != 0 else False
-                    # self.cells[m * self.cells_per_module + 5].balance = True if (msg.data[m] & 0x20) != 0 else False
-                    # self.cells[m * self.cells_per_module + 6].balance = True if (msg.data[m] & 0x40) != 0 else False
-                    # self.cells[m * self.cells_per_module + 7].balance = True if (msg.data[m] & 0x80) != 0 else False
+                for m in range ((msg.arbitration_id-0x26A) * 7, ((msg.arbitration_id-0x26A + 1) * 7) -1):
+                    self.cells[m * self.cells_per_module + 0].balance = True if (msg.data[m+1] & 1) != 0 else False
+                    self.cells[m * self.cells_per_module + 1].balance = True if (msg.data[m+1] & 2) != 0 else False
+                    self.cells[m * self.cells_per_module + 2].balance = True if (msg.data[m+1] & 4) != 0 else False
+                    self.cells[m * self.cells_per_module + 3].balance = True if (msg.data[m+1] & 8) != 0 else False
+                    # self.cells[m * self.cells_per_module + 4].balance = True if (msg.data[m+1] & 0x10) != 0 else False
+                    # self.cells[m * self.cells_per_module + 5].balance = True if (msg.data[m+1] & 0x20) != 0 else False
+                    # self.cells[m * self.cells_per_module + 6].balance = True if (msg.data[m+1] & 0x40) != 0 else False
+                    # self.cells[m * self.cells_per_module + 7].balance = True if (msg.data[m+1] & 0x80) != 0 else False
 
             elif msg.arbitration_id in [0x350, 0x352, 0x354, 0x356, 0x358, 0x35A, 0x35C, 0x35E, 0x360, 0x362, 0x364]:
                 module = (msg.arbitration_id - 0x350) >> 1
@@ -342,8 +339,5 @@ class Ubms_Can(Battery):
             {"can_id": 0x350, "can_mask": 0xFF0},
             {"can_id": 0x360, "can_mask": 0xFF0},
             {"can_id": 0x26A, "can_mask": 0xFF0},
-#            {"can_id": 0x46A, "can_mask": 0xFF0},
-#            {"can_id": 0x06A, "can_mask": 0xFF0},
-#            {"can_id": 0x76A, "can_mask": 0xFF0},
         ]
         self.can_transport_interface.can_bus.set_filters(filters)
